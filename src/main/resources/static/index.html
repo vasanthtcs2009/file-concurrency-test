@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Java 25 Virtual Threads Ingestion Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Virtual Threads <span>Ingestion Engine</span></h1>
+            <div class="badge" id="java-badge">Java 25 Platform Enabled</div>
+        </header>
+
+        <div class="grid">
+            <!-- Ingestion Control Panel -->
+            <div class="card">
+                <h2 class="card-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                    Pipeline Orchestrator
+                </h2>
+
+                <div class="form-group">
+                    <label for="record-count">Mock Record Count (150+ columns each)</label>
+                    <select id="record-count">
+                        <option value="5000">5,000 records (~13MB)</option>
+                        <option value="25000">25,000 records (~65MB)</option>
+                        <option value="50000" selected>50,000 records (~130MB)</option>
+                        <option value="100000">100,000 records (~260MB)</option>
+                        <option value="200000">200,000 records (~520MB)</option>
+                    </select>
+                </div>
+
+                <div class="button-group">
+                    <button id="btn-generate" class="secondary">
+                        Generate JSON File
+                    </button>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 2rem 0;">
+
+                <div class="form-group">
+                    <label for="batch-size">JDBC Batch Insert Size</label>
+                    <select id="batch-size">
+                        <option value="100">100 records / batch</option>
+                        <option value="500">500 records / batch</option>
+                        <option value="1000" selected>1,000 records / batch (Recommended)</option>
+                        <option value="2500">2,500 records / batch</option>
+                        <option value="5000">5,000 records / batch</option>
+                    </select>
+                </div>
+
+                <div class="button-group">
+                    <button id="btn-import" class="primary" disabled>
+                        Run Virtual Thread Ingestion
+                    </button>
+                    <button id="btn-clear" class="danger">
+                        Wipe DB & File
+                    </button>
+                </div>
+
+                <div class="progress-container" id="progress-panel" style="display: none;">
+                    <div class="progress-header">
+                        <span id="progress-text">Ingesting data...</span>
+                        <span id="progress-percentage">0%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ingestion Performance Metrics -->
+            <div class="card">
+                <h2 class="card-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                    Performance Metrics
+                </h2>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <span class="stat-label">Ingestion Throughput</span>
+                        <span class="stat-value highlight" id="stat-throughput">0.00 <span style="font-size: 0.8rem; font-weight: normal;">rec/s</span></span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Active DB Write Threads</span>
+                        <span class="stat-value highlight" id="stat-threads">0</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Processed / Total</span>
+                        <span class="stat-value" id="stat-processed">0 / 0</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Database Row Count</span>
+                        <span class="stat-value success" id="stat-db-count">0</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Time Elapsed</span>
+                        <span class="stat-value" id="stat-elapsed">0.0s</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">File Size</span>
+                        <span class="stat-value" id="stat-file-size">0.0 MB</span>
+                    </div>
+                </div>
+
+                <div class="job-status-indicator" style="margin-top: 1.5rem;">
+                    <span>Engine Status:</span>
+                    <span id="status-badge" class="job-status-indicator">
+                        <span class="status-dot pending" id="status-dot"></span>
+                        <span id="status-text">IDLE</span>
+                    </span>
+                </div>
+
+                <div class="logs-box" id="logs-console">Console initialized. Ready to generate and ingest.</div>
+            </div>
+
+            <!-- Ingested Data Explorer -->
+            <div class="card data-card">
+                <h2 class="card-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Database Explorer <span style="font-size: 0.875rem; font-weight: normal; color: var(--text-secondary); margin-left: 0.5rem;">(Sample showing latest 100 ingested records)</span>
+                </h2>
+
+                <button id="btn-refresh-data" class="secondary" style="display: inline-flex; width: auto; margin-bottom: 1rem; padding: 0.5rem 1rem; font-size: 0.875rem;">
+                    Refresh Sample Data
+                </button>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr id="table-headers">
+                                <th>ID</th>
+                                <th>Device ID</th>
+                                <th>Timestamp</th>
+                                <th>Status</th>
+                                <th>Metric 1</th>
+                                <th>Metric 2</th>
+                                <th>Metric 3</th>
+                                <th>...</th>
+                                <th>Metric 146</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            <tr>
+                                <td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 2rem;">No data in database. Run ingestion pipeline.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
