@@ -7,5 +7,6 @@ Welcome to the documentation for the **File Concurrency Test Platform**. This pr
 *   **[Architecture Guide](./ARCHITECTURE.md)**: Explore the System Context (L1) and Component (L2) diagrams detailing the internal structure and external integrations.
 *   **[Concurrency Model](./CONCURRENCY_MODEL.md)**: Read about virtual thread implementation, backpressure management via semaphores, and performance characteristics.
 *   **[Design Decisions](./DESIGN_DECISIONS.md)**: Learn the rationale behind our choice of database, JSON parsing libraries, and concurrency strategies.
+*   **[Commit Guidelines](./COMMIT_INSTRUCTIONS.md)**: Discover gitmoji and conventional commit rules followed in this repository.
 
 For setup and quick start instructions, please refer to the main [README.md](../README.md).
