@@ -70,11 +70,10 @@ public class TelemetryController {
 
         double sizeMb = file.length() / (1024.0 * 1024.0);
         IngestionService.IngestionJob job = ingestionService.createJob(
-                batchSize, 
+                batchSize,
                 Math.round(sizeMb * 100.0) / 100.0,
                 target,
-                redisStrategy
-        );
+                redisStrategy);
         ingestionService.startIngestion(FILE_PATH, job.getId());
 
         return ResponseEntity.ok(Map.of(
@@ -83,8 +82,7 @@ public class TelemetryController {
                 "batchSize", job.getBatchSize(),
                 "fileSizeMb", job.getFileSizeMb(),
                 "target", job.getTarget(),
-                "redisStrategy", job.getRedisStrategy()
-        ));
+                "redisStrategy", job.getRedisStrategy()));
     }
 
     @GetMapping("/status/{jobId}")
@@ -93,7 +91,7 @@ public class TelemetryController {
         if (job == null) {
             return ResponseEntity.notFound().build();
         }
-        
+
         long dbCount = telemetryRepository.count();
         long redisCount = telemetryRedisRepository.count();
         Map<String, Object> response = buildJobResponse(job, dbCount, redisCount);
@@ -105,7 +103,7 @@ public class TelemetryController {
         List<IngestionService.IngestionJob> activeJobs = ingestionService.getJobs();
         long dbCount = telemetryRepository.count();
         long redisCount = telemetryRedisRepository.count();
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("dbRowCount", dbCount);
         response.put("redisRowCount", redisCount);
@@ -129,8 +127,7 @@ public class TelemetryController {
         }
         return ResponseEntity.ok(Map.of(
                 "message", "Database truncated successfully",
-                "fileDeleted", deleted
-        ));
+                "fileDeleted", deleted));
     }
 
     private Map<String, Object> buildJobResponse(IngestionService.IngestionJob job, long dbCount, long redisCount) {
@@ -161,7 +158,7 @@ public class TelemetryController {
         response.put("dbRowCount", dbCount);
         response.put("redisRowCount", redisCount);
         response.put("writeTimeMs", job.getWriteTimeMs().get());
-        
+
         return response;
     }
 }

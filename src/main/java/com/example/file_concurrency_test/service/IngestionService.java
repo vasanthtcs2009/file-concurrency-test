@@ -31,12 +31,13 @@ public class IngestionService {
     private final TelemetryRepository telemetryRepository;
     private final TelemetryRedisRepository telemetryRedisRepository;
     private final Map<String, IngestionJob> jobs = new ConcurrentHashMap<>();
-    
+
     // Concurrency limit for DB writes to match connection pool size
-    private static final int MAX_CONCURRENT_WRITES = 45; 
+    private static final int MAX_CONCURRENT_WRITES = 100;
     private final Semaphore writeSemaphore = new Semaphore(MAX_CONCURRENT_WRITES);
 
-    public IngestionService(TelemetryRepository telemetryRepository, TelemetryRedisRepository telemetryRedisRepository) {
+    public IngestionService(TelemetryRepository telemetryRepository,
+            TelemetryRedisRepository telemetryRedisRepository) {
         this.telemetryRepository = telemetryRepository;
         this.telemetryRedisRepository = telemetryRedisRepository;
     }
@@ -108,14 +109,14 @@ public class IngestionService {
 
     private void processIngestion(String filePath, IngestionJob job) throws IOException, InterruptedException {
         log.info("Starting ingestion of {} with batch size {}", filePath, job.getBatchSize());
-        
+
         JsonFactory factory = new JsonFactory();
-        
+
         // Virtual thread executor for database write tasks
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
-             InputStream fis = new FileInputStream(filePath);
-             InputStream bis = new BufferedInputStream(fis);
-             JsonParser parser = factory.createParser(bis)) {
+                InputStream fis = new FileInputStream(filePath);
+                InputStream bis = new BufferedInputStream(fis);
+                JsonParser parser = factory.createParser(bis)) {
 
             if (parser.nextToken() != JsonToken.START_ARRAY) {
                 throw new IOException("Invalid JSON format. Expected start array token.");
@@ -212,22 +213,25 @@ public class IngestionService {
         if (!"FAILED".equals(job.getStatus())) {
             job.setStatus("COMPLETED");
             long totalTimeMs = job.getEndTime() - job.getStartTime();
-            log.info("Ingestion completed successfully for job {}. Total Ingestion Time: {} ms", job.getId(), totalTimeMs);
-            
+            log.info("Ingestion completed successfully for job {}. Total Ingestion Time: {} ms", job.getId(),
+                    totalTimeMs);
+
             boolean writePg = "postgres".equals(job.getTarget()) || "both".equals(job.getTarget());
             boolean writeRedis = "redis".equals(job.getTarget()) || "both".equals(job.getTarget());
             long records = job.getRecordsWritten().get();
-            
+
             if (writePg) {
                 long pgTime = job.getWriteTimeMs().get();
                 double pgThroughput = pgTime > 0 ? (records / (pgTime / 1000.0)) : 0.0;
-                log.info("Postgres Ingestion Metrics - Job ID: {}, Total Cumulative Write Time: {} ms, Throughput: {} records/sec",
+                log.info(
+                        "Postgres Ingestion Metrics - Job ID: {}, Total Cumulative Write Time: {} ms, Throughput: {} records/sec",
                         job.getId(), pgTime, String.format("%.2f", pgThroughput));
             }
             if (writeRedis) {
                 long redisTime = job.getRedisWriteTimeMs().get();
                 double redisThroughput = redisTime > 0 ? (records / (redisTime / 1000.0)) : 0.0;
-                log.info("Redis Ingestion Metrics ({}) - Job ID: {}, Total Cumulative Write Time: {} ms, Throughput: {} records/sec",
+                log.info(
+                        "Redis Ingestion Metrics ({}) - Job ID: {}, Total Cumulative Write Time: {} ms, Throughput: {} records/sec",
                         job.getRedisStrategy(), job.getId(), redisTime, String.format("%.2f", redisThroughput));
             }
         }
@@ -277,7 +281,7 @@ public class IngestionService {
             telemetryRedisRepository.incrementCount(batchToInsert.size());
             job.getRedisWriteTimeMs().addAndGet(System.currentTimeMillis() - redisStart);
         }
-        
+
         job.getRecordsWritten().addAndGet(batchToInsert.size());
     }
 }
