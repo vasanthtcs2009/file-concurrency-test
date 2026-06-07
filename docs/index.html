@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>File Concurrency Test - Documentation</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="description" content="High-performance Spring Boot concurrent telemetry ingestion platform using Java virtual threads." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Docsify Themeable Style -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple-dark.css" />
+
+  <!-- Custom Styles for Premium UI/UX -->
+  <style>
+    :root {
+      /* Themeable Overrides */
+      --theme-color: #38bdf8; /* Premium Sky Blue */
+      --base-font-family: 'Inter', 'Outfit', sans-serif;
+      --heading-font-family: 'Outfit', sans-serif;
+      --code-font-family: 'Fira Code', monospace;
+      
+      --base-background: #0b0f19; /* Sleek Deep Blue/Slate */
+      --base-color: #cbd5e1; /* slate-300 */
+      
+      --sidebar-background: #111827; /* gray-900 */
+      --sidebar-color: #9ca3af; /* gray-400 */
+      --sidebar-name-color: #f3f4f6; /* gray-100 */
+      --sidebar-nav-link-color--active: #38bdf8;
+      --sidebar-nav-link-border-color--active: #38bdf8;
+      --sidebar-width: 18rem;
+      
+      --content-max-width: 58rem;
+      --link-color: #38bdf8;
+      --link-color--hover: #7dd3fc;
+      
+      --code-theme-background: #1f2937; /* gray-800 */
+      --code-theme-color: #f3f4f6;
+      
+      --search-background: #1f2937;
+      --search-border-color: #374151;
+      --search-placeholder-color: #6b7280;
+      --search-result-keyword-background: rgba(56, 189, 248, 0.2);
+      --search-result-keyword-color: #38bdf8;
+    }
+
+    body {
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Sidebar Styling */
+    .sidebar {
+      border-right: 1px solid #1f2937 !important;
+      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+    }
+    
+    .sidebar .app-name {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Content Typography & Elements */
+    .markdown-section h1, 
+    .markdown-section h2, 
+    .markdown-section h3, 
+    .markdown-section h4 {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      color: #f9fafb; /* gray-50 */
+      letter-spacing: -0.025em;
+    }
+
+    .markdown-section h1 {
+      font-size: 2.2rem;
+      border-bottom: 1px solid #1f2937;
+      padding-bottom: 0.75rem;
+      margin-top: 2rem;
+      background: linear-gradient(135deg, #ffffff 0%, #9ca3af 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .markdown-section h2 {
+      font-size: 1.6rem;
+      margin-top: 2.5rem;
+      border-bottom: 1px solid #1f2937;
+      padding-bottom: 0.5rem;
+    }
+
+    .markdown-section h3 {
+      font-size: 1.25rem;
+      margin-top: 2rem;
+    }
+
+    /* Elegant Tables */
+    .markdown-section table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 2rem 0;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #1f2937;
+    }
+
+    .markdown-section th {
+      background-color: #111827;
+      color: #f9fafb;
+      font-weight: 600;
+      padding: 0.85rem 1.2rem;
+      text-align: left;
+      border-bottom: 2px solid #1f2937;
+    }
+
+    .markdown-section td {
+      padding: 0.85rem 1.2rem;
+      border-bottom: 1px solid #1f2937;
+      background-color: #0b0f19;
+      color: #cbd5e1;
+    }
+
+    .markdown-section tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Custom inline code */
+    .markdown-section :not(pre) > code {
+      background: #1f2937;
+      color: #f3f4f6;
+      padding: 0.2rem 0.4rem;
+      border-radius: 6px;
+      font-size: 0.9em;
+      border: 1px solid #374151;
+    }
+
+    /* Code blocks container */
+    .markdown-section pre {
+      border: 1px solid #1f2937;
+      border-radius: 10px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+      margin: 1.5rem 0;
+    }
+
+    /* Mermaid Wrapper */
+    .mermaid {
+      background: #111827 !important;
+      padding: 2rem;
+      border-radius: 10px;
+      border: 1px solid #1f2937;
+      display: flex;
+      justify-content: center;
+      margin: 2rem 0;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+      overflow-x: auto;
+    }
+
+    /* GitHub Alert Styles */
+    .markdown-section blockquote {
+      border-left: 4px solid #38bdf8;
+      background: rgba(56, 189, 248, 0.05);
+      padding: 1rem 1.5rem;
+      border-radius: 0 8px 8px 0;
+      margin: 1.5rem 0;
+      color: #9ca3af;
+    }
+
+    .markdown-section blockquote p {
+      margin: 0;
+      font-style: normal;
+    }
+
+    /* Customizing scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b0f19;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1f2937;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #374151;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">Loading platform documentation...</div>
+
+  <!-- Docsify Configuration -->
+  <script>
+    window.$docsify = {
+      name: 'File Concurrency Test',
+      repo: 'https://github.com/vasanthtcs2009/file-concurrency-test',
+      loadSidebar: true,
+      subMaxLevel: 3,
+      auto2top: true,
+      homepage: 'README.md',
+      search: {
+        maxAge: 86400000,
+        paths: 'auto',
+        placeholder: 'Search documentation...',
+        noData: 'No results found',
+        depth: 4
+      },
+      copyCode: {
+        buttonText : 'Copy',
+        errorText  : 'Error',
+        successText: 'Copied'
+      }
+    };
+  </script>
+
+  <!-- Docsify core and plugins -->
+  <script src="https://cdn.jsdelivr.net/npm/docsify@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/js/docsify-themeable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify-copy-code/dist/docsify-copy-code.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"></script>
+
+  <!-- Mermaid Support -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    // Inline plugin for Docsify to render Mermaid diagrams
+    (function() {
+      const mermaidPlugin = function(hook, vm) {
+        hook.afterEach(function(html, next) {
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = html;
+          
+          tempDiv.querySelectorAll('pre[data-lang="mermaid"]').forEach(function(element) {
+            const replacement = document.createElement('div');
+            replacement.className = 'mermaid';
+            replacement.textContent = element.textContent;
+            element.parentNode.replaceChild(replacement, element);
+          });
+          
+          next(tempDiv.innerHTML);
+        });
+
+        hook.doneEach(function() {
+          mermaid.initialize({ 
+            startOnLoad: false, 
+            theme: 'dark',
+            themeVariables: {
+              background: '#111827',
+              primaryColor: '#1f2937',
+              primaryTextColor: '#cbd5e1',
+              lineColor: '#38bdf8',
+              signalColor: '#38bdf8',
+              signalTextColor: '#f3f4f6'
+            }
+          });
+          mermaid.init(undefined, '.mermaid');
+        });
+      };
+
+      window.$docsify.plugins = [
+        mermaidPlugin,
+        ...(window.$docsify.plugins || [])
+      ];
+    })();
+  </script>
+</body>
+</html>
